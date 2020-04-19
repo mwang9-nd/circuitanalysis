@@ -1,0 +1,62 @@
+# Set working directory
+setwd("G:/Shared drives/Smith Lab/Manuscripts/circuit analysis DRG/Michelle/Graphs and Quantifications/pErk data/Distinct Ages/")
+rm(list=ls())
+
+################
+# Load in Data #
+################
+
+raw.values = read.csv("distinctages_input.csv", header = TRUE)
+
+#####################################
+# Normalizing Integral Density Data #
+#####################################
+
+# Normalized to background within individual fluorescence channels.
+norm488 = (raw.values$m488.IntDen - raw.values$b488.IntDen)/raw.values$b488.IntDen
+norm594 = (raw.values$m594.IntDen - raw.values$b594.IntDen)/raw.values$b594.IntDen
+
+# pERK expression level normalized to transgene intensity
+pERK.Tg = norm594/norm488
+
+# Create new data frame with key data identifiers and normalized data.
+values = data.frame(cbind(raw.values$Code.ID, 
+                          raw.values$Age, 
+                          raw.values$Temperature,
+                          raw.values$Fish.ID,
+                          raw.values$DRG.ID, 
+                          norm488, 
+                          norm594,
+                          pERK.Tg))
+
+colnames(values) = c("Code.ID",
+                      "Age",
+                      "Temperature",
+                      "Fish.ID",
+                      "DRG.ID",
+                      "Tg(ngn1:gfp)",
+                      "pERK",
+                      "pERK.Tg")
+
+# Separate by ages
+dpf3 = subset(values, Age == 3)
+dpf5 = subset(values, Age == 5)
+
+# Calculate threshold
+dpf3.23deg = subset(dpf3, Temperature == 23)
+dpf3.threshold = mean(dpf3.23deg$pERK.Tg) + sd(dpf3.23deg$pERK.Tg)
+
+dpf5.23deg = subset(dpf5, Temperature == 23)
+dpf5.threshold = mean(dpf5.23deg$pERK.Tg) + sd(dpf5.23deg$pERK.Tg)
+
+# Determine active DRG
+ActiveDRG = dpf3$pERK.Tg>dpf3.threshold
+dpf3 = cbind(dpf3, ActiveDRG)
+
+ActiveDRG = dpf5$pERK.Tg>dpf5.threshold
+dpf5 = cbind(dpf5, ActiveDRG)
+
+final = rbind(dpf3, dpf5)
+
+# Export data
+write.csv(final, file = "distinctages_output.csv")
