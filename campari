@@ -1,0 +1,35 @@
+#########################
+# Set working directory #
+#########################
+setwd("G:/Shared drives/Smith Lab/Manuscripts/circuit analysis DRG/Michelle/Graphs and Quantifications/CaMPARI data/Threshold Tests/")
+rm(list=ls())
+
+################
+# Load in Data #
+################
+
+SD2 = read.csv("2SD.csv", header = TRUE)
+SD3 = read.csv("3SD.csv", header = TRUE)
+SD4 = read.csv("4SD.csv", header = TRUE)
+
+# Extract indentification information
+id = SD2[,c(1:6)]
+
+#####################
+# Compute threshold # - Activation determined as any measurement above threshold
+#####################
+
+SD2_pc.threshold =  mean(SD2$bpc.IntDen)
+SD3_pc.threshold =  mean(SD3$bpc.IntDen)
+SD4_pc.threshold =  mean(SD4$bpc.IntDen)
+
+SD2_activation = SD2$mpc.IntDen > SD2_pc.threshold
+SD3_activation = SD3$mpc.IntDen > SD3_pc.threshold
+SD4_activation = SD4$mpc.IntDen > SD4_pc.threshold
+
+###############
+# Export data #
+###############
+
+threshold_test = cbind(id,SD2_activation, SD3_activation, SD4_activation)
+write.csv(threshold_test, file = "threshold_test.csv")
