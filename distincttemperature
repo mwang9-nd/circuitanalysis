@@ -1,0 +1,50 @@
+# Set working directory
+setwd("G:/Shared drives/Smith Lab/Manuscripts/circuit analysis DRG/Michelle/Graphs and Quantifications/pErk data/Distinct Temperature/")
+rm(list=ls())
+
+################
+# Load in Data #
+################
+
+raw.values = read.csv("distincttemp_input.csv", header = TRUE)
+
+#####################################
+# Normalizing Integral Density Data #
+#####################################
+
+# Normalized to background within individual fluorescence channels.
+norm488 = (raw.values$m488.IntDen - raw.values$b488.IntDen)/raw.values$b488.IntDen
+norm594 = (raw.values$m594.IntDen - raw.values$b594.IntDen)/raw.values$b594.IntDen
+
+# pERK expression level normalized to transgene intensity
+pERK.Tg = norm594/norm488
+
+# Create new data frame with key data identifiers and normalized data.
+values = data.frame(cbind(raw.values$Code.ID, 
+                          raw.values$Age, 
+                          raw.values$Temperature,
+                          raw.values$Fish.ID,
+                          raw.values$DRG.ID, 
+                          norm488, 
+                          norm594,
+                          pERK.Tg))
+
+colnames(values) = c("Code.ID",
+                     "Age",
+                     "Temperature",
+                     "Fish.ID",
+                     "DRG.ID",
+                     "Tg(ngn1:gfp)",
+                     "pERK",
+                     "pERK.Tg")
+
+# Calculate threshold
+deg.23 = subset(values, Temperature == 23)
+threshold = mean(deg.23$pERK.Tg) + sd(deg.23$pERK.Tg)
+
+# Determine active DRG
+Active.DRG = values$pERK.Tg > threshold
+final = cbind(values, Active.DRG)
+
+# Export data
+write.csv(final, file = "distincttemp_output.csv")
